@@ -1,0 +1,7 @@
+__pycache__/
+.pytest_cache/
+.omx/
+TaskRadar/
+.streamlit/secrets.toml
+.env
+*.pyc

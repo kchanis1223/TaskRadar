@@ -66,6 +66,8 @@ class AnalysisResult:
     morning_notification_preview: str
     senior_reply_update: str = ""
     provider: str = "fallback"
+    provider_error: str = ""
+    warnings: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -77,4 +79,6 @@ class AnalysisResult:
             "morning_notification_preview": self.morning_notification_preview,
             "senior_reply_update": self.senior_reply_update,
             "provider": self.provider,
+            "provider_error": self.provider_error,
+            "warnings": self.warnings,
         }

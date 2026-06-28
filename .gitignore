@@ -1,7 +1,13 @@
 __pycache__/
 .pytest_cache/
+.venv/
 .omx/
 TaskRadar/
 .streamlit/secrets.toml
 .env
 *.pyc
+*.log
+streamlit*.log
+~$*
+test_work_*.txt
+test_odd.txt

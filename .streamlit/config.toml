@@ -1,0 +1,9 @@
+[server]
+headless = true
+address = "127.0.0.1"
+port = 8501
+fileWatcherType = "none"
+maxUploadSize = 10
+
+[browser]
+gatherUsageStats = false

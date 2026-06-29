@@ -10,6 +10,8 @@ Group=ubuntu
 WorkingDirectory=/home/ubuntu/TaskRadar
 Environment=HOME=/home/ubuntu
 Environment=PATH=/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar
+Environment=TASKRADAR_OPENCODE_CONFIG_HOME=/home/ubuntu/.config/taskradar
 ExecStart=/bin/bash /home/ubuntu/TaskRadar/scripts/start_server.sh --address 127.0.0.1 --port 8501
 Restart=always
 RestartSec=5

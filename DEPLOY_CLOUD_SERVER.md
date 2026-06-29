@@ -22,9 +22,10 @@ TaskRadar should keep these settings on the server:
 TASKRADAR_MODE=demo
 TASKRADAR_USE_OPENCODE=1
 TASKRADAR_REQUIRE_OPENCODE=1
-TASKRADAR_OPENCODE_MODEL=openai/gpt-5.4-mini
+TASKRADAR_OPENCODE_MODEL=anthropic/claude-haiku-4-5
 TASKRADAR_OPENCODE_TIMEOUT=180
 TASKRADAR_OPENCODE_WORK_DIR=/var/lib/taskradar/opencode-work
+TASKRADAR_OPENCODE_CONFIG_HOME=/home/ubuntu/.config/taskradar
 TASKRADAR_ACCESS_PASSWORD=replace-with-a-strong-password
 ```
 
@@ -55,11 +56,7 @@ Restart the shell or load the profile, then verify:
 ```bash
 exec "$SHELL" -l
 opencode --version
-opencode run "Say hello from TaskRadar server"
 ```
-
-If `opencode run` asks for provider authentication, complete that login as the
-same Linux user that will run the service, usually `ubuntu`.
 
 ## 3. Clone and install TaskRadar
 
@@ -71,6 +68,36 @@ python3 -m venv .venv
 .venv/bin/python -m pip install --upgrade pip
 .venv/bin/python -m pip install -r requirements.txt
 ```
+
+## 4. Configure OpenCode subscription auth
+
+TaskRadar uses the same subscription-auth pattern as `BHOS_v2`: an isolated
+OpenCode profile with the `opencode-claude-auth@latest` plugin. Do not run
+`opencode providers login anthropic` for this setup.
+
+Create the isolated OpenCode profile:
+
+```bash
+mkdir -p /home/ubuntu/.config/taskradar/opencode
+cp /home/ubuntu/TaskRadar/deploy/opencode-taskradar.json \
+  /home/ubuntu/.config/taskradar/opencode/opencode.json
+```
+
+Authenticate through the plugin-backed profile:
+
+```bash
+XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar opencode
+```
+
+Inside OpenCode, run `/connect` and complete the Claude subscription auth flow
+provided by `opencode-claude-auth`. After login, verify with the same profile:
+
+```bash
+XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar \
+  opencode run -m anthropic/claude-haiku-4-5 "Return only OK"
+```
+
+## 5. Configure TaskRadar environment
 
 Create server-only environment variables:
 
@@ -85,9 +112,10 @@ TASKRADAR_MODE=demo
 TASKRADAR_USE_OPENCODE=1
 TASKRADAR_REQUIRE_OPENCODE=1
 TASKRADAR_OPENCODE_COMMAND=/home/ubuntu/.local/bin/opencode
-TASKRADAR_OPENCODE_MODEL=openai/gpt-5.4-mini
+TASKRADAR_OPENCODE_MODEL=anthropic/claude-haiku-4-5
 TASKRADAR_OPENCODE_TIMEOUT=180
 TASKRADAR_OPENCODE_WORK_DIR=/var/lib/taskradar/opencode-work
+TASKRADAR_OPENCODE_CONFIG_HOME=/home/ubuntu/.config/taskradar
 TASKRADAR_ACCESS_PASSWORD=replace-with-a-strong-password
 ```
 
@@ -97,12 +125,15 @@ If `which opencode` prints a different path, use that value for
 Prepare the OpenCode work directory:
 
 ```bash
+mkdir -p /home/ubuntu/.config/taskradar/opencode
+cp /home/ubuntu/TaskRadar/deploy/opencode-taskradar.json \
+  /home/ubuntu/.config/taskradar/opencode/opencode.json
 sudo mkdir -p /var/lib/taskradar/opencode-work
 sudo chown -R ubuntu:ubuntu /var/lib/taskradar
 chmod +x /home/ubuntu/TaskRadar/scripts/start_server.sh
 ```
 
-## 4. Test manually
+## 6. Test manually
 
 ```bash
 cd /home/ubuntu/TaskRadar
@@ -117,7 +148,7 @@ curl -I http://127.0.0.1:8501
 
 Stop the manual server with `Ctrl+C` after the local check succeeds.
 
-## 5. Install systemd service
+## 7. Install systemd service
 
 ```bash
 sudo cp /home/ubuntu/TaskRadar/deploy/taskradar.service /etc/systemd/system/taskradar.service
@@ -133,7 +164,7 @@ sudo systemctl restart taskradar
 sudo journalctl -u taskradar -f
 ```
 
-## 6. Configure Nginx
+## 8. Configure Nginx
 
 Copy the sample config:
 
@@ -151,7 +182,7 @@ is connected, replace it with the domain, for example:
 server_name taskradar.example.com;
 ```
 
-## 7. Lightsail networking
+## 9. Lightsail networking
 
 In the Lightsail console, keep these ports open:
 
@@ -162,7 +193,7 @@ In the Lightsail console, keep these ports open:
 Do not expose Streamlit port `8501` publicly. Streamlit should listen only on
 `127.0.0.1`, and Nginx should be the public entry point.
 
-## 8. HTTPS
+## 10. HTTPS
 
 After the domain DNS points to the Lightsail public IP, install a certificate:
 
@@ -171,7 +202,7 @@ sudo apt install -y certbot python3-certbot-nginx
 sudo certbot --nginx -d taskradar.example.com
 ```
 
-## 9. Deploy updates
+## 11. Deploy updates
 
 ```bash
 cd /home/ubuntu/TaskRadar
@@ -181,14 +212,15 @@ sudo systemctl restart taskradar
 sudo journalctl -u taskradar -n 100 --no-pager
 ```
 
-## 10. Health checks
+## 12. Health checks
 
 Run these after setup and after each deployment:
 
 ```bash
 systemctl is-active taskradar
 curl -I http://127.0.0.1:8501
-opencode run "Return only OK"
+XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar \
+  opencode run -m anthropic/claude-haiku-4-5 "Return only OK"
 ```
 
 Then open the public URL, enter `TASKRADAR_ACCESS_PASSWORD`, upload a sample

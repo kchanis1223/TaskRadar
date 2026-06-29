@@ -22,7 +22,7 @@ TaskRadar should keep these settings on the server:
 TASKRADAR_MODE=demo
 TASKRADAR_USE_OPENCODE=1
 TASKRADAR_REQUIRE_OPENCODE=1
-TASKRADAR_OPENCODE_MODEL=anthropic/claude-haiku-4-5
+TASKRADAR_OPENCODE_MODEL=openai/gpt-5.4-mini
 TASKRADAR_OPENCODE_TIMEOUT=180
 TASKRADAR_OPENCODE_WORK_DIR=/var/lib/taskradar/opencode-work
 TASKRADAR_OPENCODE_CONFIG_HOME=/home/ubuntu/.config/taskradar
@@ -69,11 +69,11 @@ python3 -m venv .venv
 .venv/bin/python -m pip install -r requirements.txt
 ```
 
-## 4. Configure OpenCode subscription auth
+## 4. Configure OpenCode OpenAI auth
 
-TaskRadar uses the same subscription-auth pattern as `BHOS_v2`: an isolated
-OpenCode profile with the `opencode-claude-auth@latest` plugin. Do not run
-`opencode providers login anthropic` for this setup.
+TaskRadar keeps the OpenCode execution path, but the server uses an isolated
+OpenCode profile with OpenAI credentials. OpenCode stores provider credentials
+outside the repo, so no API key should be committed.
 
 Create the isolated OpenCode profile:
 
@@ -83,18 +83,25 @@ cp /home/ubuntu/TaskRadar/deploy/opencode-taskradar.json \
   /home/ubuntu/.config/taskradar/opencode/opencode.json
 ```
 
-Authenticate through the plugin-backed profile:
+Add the OpenAI API key to the same profile:
+
+```bash
+XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar opencode auth login
+```
+
+Select OpenAI and paste the OpenAI Platform API key. If your OpenCode version
+does not support `opencode auth login`, start the TUI instead and run
+`/connect`:
 
 ```bash
 XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar opencode
 ```
 
-Inside OpenCode, run `/connect` and complete the Claude subscription auth flow
-provided by `opencode-claude-auth`. After login, verify with the same profile:
+After the key is saved, verify with the same profile:
 
 ```bash
 XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar \
-  opencode run -m anthropic/claude-haiku-4-5 "Return only OK"
+  opencode run -m openai/gpt-5.4-mini "Return only OK"
 ```
 
 ## 5. Configure TaskRadar environment
@@ -112,7 +119,7 @@ TASKRADAR_MODE=demo
 TASKRADAR_USE_OPENCODE=1
 TASKRADAR_REQUIRE_OPENCODE=1
 TASKRADAR_OPENCODE_COMMAND=/home/ubuntu/.local/bin/opencode
-TASKRADAR_OPENCODE_MODEL=anthropic/claude-haiku-4-5
+TASKRADAR_OPENCODE_MODEL=openai/gpt-5.4-mini
 TASKRADAR_OPENCODE_TIMEOUT=180
 TASKRADAR_OPENCODE_WORK_DIR=/var/lib/taskradar/opencode-work
 TASKRADAR_OPENCODE_CONFIG_HOME=/home/ubuntu/.config/taskradar
@@ -220,7 +227,7 @@ Run these after setup and after each deployment:
 systemctl is-active taskradar
 curl -I http://127.0.0.1:8501
 XDG_CONFIG_HOME=/home/ubuntu/.config/taskradar \
-  opencode run -m anthropic/claude-haiku-4-5 "Return only OK"
+  opencode run -m openai/gpt-5.4-mini "Return only OK"
 ```
 
 Then open the public URL, enter `TASKRADAR_ACCESS_PASSWORD`, upload a sample
